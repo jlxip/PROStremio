@@ -63,7 +63,6 @@ methods["stream.find"] = function(args, callback) {
 /*
 DATA:
 movie_or_series|infohash|mapidx|quality@seeds|trackers
-movie_or_series|infohash|mapidx|quality@seeds|trackers
 
 TRACKERS:
 tracker_a(B64) & tracker_b(B64)
@@ -74,20 +73,17 @@ function doQueries(queries, args, callback) {
 
 	var results = [];
 
-	var DATA = null;
 	const client = net.connect({port: CLIENT_PORT}, () => {
 		if(DEBUG) console.log('Connected.');
 		client.write(queries[0]);
 	});
 	client.on('data', (data) => {
 		if(DEBUG) console.log(data.toString());
-		DATA = data;
 		client.end();
-	});
-	client.on('end', () => {
+
 		if(DEBUG) console.log("Finished!");
 
-		var toReturnArrays = new Array();
+		var toReturnArrays = new Array();		
 
 		var DATA_options = data.toString().split("\n");
 		for(var i=0;i<DATA_options.length;i++) {
@@ -96,86 +92,31 @@ function doQueries(queries, args, callback) {
 			var OPTION_trackers = OPTION_fields[4].split("&");
 			var TRACKERS = new Array();
 			for(var j=0;j<OPTION_trackers.length;j++) {
-				TRACKERS.push(atob(OPTION_trackers[j]));
+				TRACKERS.push(new Buffer(OPTION_trackers[j], 'base64').toString('ascii'));
 			}
 
 			if(OPTION_fields[0] == "0")	{	// MOVIE
-				var toRetturnArray = {
+				var toReturnArray = {
 					infoHash: OPTION_fields[1],
 					title: OPTION_fields[3],
 					isFree: true,
 					source: TRACKERS
 				};
+				toReturnArrays.push(toReturnArray);
 			} else {	// SERIES
-				var toRetturnArray = {
+				var toReturnArray = {
 					infoHash: OPTION_fields[1],
 					mapIdx: OPTION_fields[2],
 					title: OPTION_fields[3],
 					isFree: true,
 					source: TRACKERS
 				};
+				toReturnArrays.push(toReturnArray);
 			}
 		}
+
+		return callback(null, toReturnArrays);
 	});
-}
-
-function analyze(results, callback, queries) {
-    var toReturnArrays = new Array();
-
-    function tryNext() {
-        var tried = toTry.shift();
-        if (!tried){
-        	return callback(null, new Error('not found'));
-        }
-
-        var HASH = tried.hash;
-
-        request(tried.link, function(err, resp, body) {
-			var lastSpace = queries[0].split(" ")[queries[0].split(" ").length-1];
-			if(lastSpace.toLowerCase().split('')[0] === 's' && lastSpace.toLowerCase().split('')[3] == 'e') {
-				getMapIdx(lastSpace, getMagnetLink(HASH, realTrackers), function(mapidx) {
-					var toReturnArray = {
-						infoHash: HASH,
-						mapIdx: mapidx,
-						title: quality+"@"+tried.seeds,
-						isFree: true,
-						sources: realTrackers
-					};
-
-					toReturnArrays.push(toReturnArray);
-
-					if(toReturnArrays.length != maxN) {
-						tryNext();
-					}
-
-					if(toReturnArrays.length == maxN) {
-						if(DEBUG) console.log("Returning...");
-						console.log(toReturnArrays);
-						return callback(null, toReturnArrays);
-					}
-				});
-			} else {
-				var toReturnArray = {
-					infoHash: HASH,
-					isFree: true,
-					title: quality+"@"+tried.seeds,
-					sources: realTrackers
-				};
-				toReturnArrays.push(toReturnArray);
-
-				if(toReturnArrays.length != maxN) {
-					tryNext();
-				}
-
-				if(toReturnArrays.length == maxN) {
-					if(DEBUG) console.log("Returning...");
-					return callback(null, toReturnArrays);
-				}
-			}
-        });
-    }
-
-    tryNext();
 }
 
 function pad(n) {
