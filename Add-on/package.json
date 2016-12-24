@@ -1,6 +1,6 @@
 {
   "name": "prostremio",
-  "version": "0.0.1",
+  "version": "1.0.0",
   "description": "Choose torrents for stremio on the fly.",
   "main": "index.js",
   "scripts": {

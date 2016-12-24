@@ -14,7 +14,7 @@ var manifest = {
     "icon": "URL to 256x256 monochrome png icon", 
     "background": "https://raw.githubusercontent.com/butterproject/butter-desktop/master/src/app/images/bg-header.jpg",	// Not mine. Copied from: https://goo.gl/VkPYFs
     "id": "net.jlxip.prostremio",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "types": ["movie", "series"],
     "filter": { "query.imdb_id": { "$exists": true }, "query.type": { "$in":["series","movie"] } }
 };

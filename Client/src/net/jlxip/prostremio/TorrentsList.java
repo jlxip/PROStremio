@@ -80,6 +80,8 @@ public class TorrentsList extends JFrame {
 		add(scrollpane);
 		
 		final String Frecv = recv;
+		
+		TorrentsList me = this;
 		tabla.addMouseListener(new MouseListener() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
@@ -87,6 +89,10 @@ public class TorrentsList extends JFrame {
 					JTable target = (JTable)arg0.getSource();
 					int row = target.getSelectedRow();
 					Callback.run(socket, Frecv, torrents.get(row));
+					try {
+						socket.close();
+					} catch(IOException ioe) {}
+					me.dispose();
 				}
 			}
 
