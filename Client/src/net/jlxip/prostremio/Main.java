@@ -28,7 +28,7 @@ public class Main {
 		});
 		trayPopupMenu.add(exit);
 		
-		TrayIcon trayIcon = new TrayIcon(image, "SystemTray DEMO", trayPopupMenu);
+		TrayIcon trayIcon = new TrayIcon(image, "PROStremio", trayPopupMenu);
 		trayIcon.setImageAutoSize(true);
 		
 		try {

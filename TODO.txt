@@ -1,2 +1,3 @@
 - Favoritos
 - Descargar (ver offline)
+- Subtítulos (en descargar)
