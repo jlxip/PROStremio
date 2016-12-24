@@ -13,7 +13,10 @@ import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
 
+import javax.swing.JOptionPane;
+
 public class Main {
+	@SuppressWarnings("resource")
 	public static void main(String[] args) {
 		SystemTray systemTray = SystemTray.getSystemTray();
 		Image image = Toolkit.getDefaultToolkit().getImage("src/net/jlxip/prostremio/icon.png");
@@ -37,12 +40,18 @@ public class Main {
 			awte.printStackTrace();
 		}
 		
+		ServerSocket ss = null;
+		try {
+			ss = new ServerSocket(6371);
+		} catch(IOException ioe) {
+			JOptionPane.showMessageDialog(null, "The port is already in use.");
+			System.exit(1);
+		}
+		
 		while(true) {
 			try {
-				ServerSocket ss = new ServerSocket(6371);
 				Socket s = ss.accept();
-				new TorrentsList(s);
-				ss.close();
+				new TorrentsList(s);				
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
