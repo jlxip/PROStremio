@@ -162,7 +162,8 @@ public class GetData {
 		
 		Pattern Pep = Pattern.compile(Pattern.quote(last_space));
 		
-		for(int i=0;i<getFiles.size();i++) {
+		for(int i=1;i<getFiles.size();i++) {	// If something starts to fail, change the start value of i to 0
+			//System.out.println(getFiles.get(i));
 			if(Pep.split(getFiles.get(i).toLowerCase()).length > 1) {
 				System.out.println("ENCONTRADO: "+getFiles.get(i));
 				// ACCEPTED EXTENSIONS
@@ -172,7 +173,7 @@ public class GetData {
 				
 				for(int j=0;j<OKextensions.length;j++) {
 					if(extension.equals(OKextensions[j])) {
-						return i;
+						return i-1;	// Has to be i-1, because of something weird I did up there.
 					}
 				}
 			}
