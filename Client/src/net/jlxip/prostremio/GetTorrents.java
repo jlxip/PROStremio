@@ -89,6 +89,9 @@ public class GetTorrents {
 			}
 			
 			String result = Pend_dl.split(dls[i])[0];
+			if(Pdt.split(result).length < 2) {	// For messages like: x results removed in compliance with EUCD / DMCA
+				continue;
+			}
 			String dt = Pdt.split(result)[1];
 			String enddt = Pend_dt.split(dt)[0];
 			
