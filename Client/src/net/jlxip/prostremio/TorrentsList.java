@@ -63,13 +63,15 @@ public class TorrentsList extends JFrame {
 			}
 		}
 		TorrentsTableModel model = new TorrentsTableModel();
+		model.addColumn("*");
 		model.addColumn("Name");
 		model.addColumn("Seeds");
 		for(int i=0;i<torrents.size();i++) {
-			model.addRow(new Object[]{torrents.get(i).get(0), torrents.get(i).get(2)});
+			model.addRow(new Object[]{"", torrents.get(i).get(0), torrents.get(i).get(2)});
 		}
 		JTable tabla = new JTable(model);
 		tabla.getTableHeader().setReorderingAllowed(false);
+		tabla.getColumnModel().getColumn(0).setPreferredWidth(3);	// This makes * column thiner.
 		JScrollPane scrollpane = new JScrollPane(tabla);
 		int Pscrollpane_x = 8;
 		int Pscrollpane_y = query.getBounds().y + query.getBounds().height + 8;
