@@ -78,7 +78,7 @@ function doQueries(queries, args, callback) {
 		client.write(queries[0]);
 	});
 	client.on('data', (data) => {
-		if(DEBUG) console.log(data.toString());
+		//if(DEBUG) console.log(data.toString());
 		client.end();
 
 		if(DEBUG) console.log("Finished!");

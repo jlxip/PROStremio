@@ -160,7 +160,6 @@ public class GetData {
 		for(int i=1;i<getFiles.size();i++) {	// If something starts to fail, change the start value of i to 0
 			//System.out.println(getFiles.get(i));
 			if(Pep.split(getFiles.get(i).toLowerCase()).length > 1) {
-				System.out.println("ENCONTRADO: "+getFiles.get(i));
 				// ACCEPTED EXTENSIONS
 				String[] OKextensions = new String[]{"avi", "mkv", "mp4", "m4v"};
 				
@@ -175,5 +174,9 @@ public class GetData {
 		}
 		
 		return -1;	// TODO: show list of files and let the user choose.
+	}
+	
+	public static int getSeeds(String hash) {	// This method should only be called when searching for a given hash.
+		return -1;
 	}
 }

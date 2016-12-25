@@ -14,7 +14,7 @@ public class Callback {
 			int MovieOrSeries = GetData.MovieOrSeries(query);
 			
 			String hash = torrent.get(1);
-			System.out.println(hash);
+			//System.out.println(hash);
 			String seeds = torrent.get(2);
 			
 			Pattern Pspace = Pattern.compile(Pattern.quote(" "));
@@ -23,7 +23,6 @@ public class Callback {
 			if(MovieOrSeries == 1) {
 				mapidx = GetData.getIdx(Pspace.split(query)[Pspace.split(query).length-1], hash); 
 			}
-			System.out.println("MAPIDX: "+mapidx);
 			
 			
 			String quality = GetData.getQuality(torrent.get(0));
@@ -31,6 +30,7 @@ public class Callback {
 			String trackers = GetData.getTrackers(hash);
 			
 			String toReturn = MovieOrSeries+"|"+hash+"|"+mapidx+"|"+quality+"@"+seeds+"|"+trackers;
+			//System.out.println("ToReturn = "+toReturn);
 			
 			os.write(toReturn.getBytes());
 		} catch(IOException ioe) {
