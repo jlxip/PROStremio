@@ -139,6 +139,12 @@ public class TorrentsList extends JFrame {
 				if(arg0.getClickCount() == 2) {
 					JTable target = (JTable)arg0.getSource();
 					int row = target.getSelectedRow();
+					
+					List<String> currentTorrent = new ArrayList<String>();
+					currentTorrent.add(null);	// This is not needed ;)
+					currentTorrent.add(readStarredTorrents().get(row).get(1)); // HASH
+					currentTorrent.add(readStarredTorrents().get(row).get(2));	// Seeds
+					
 					Callback.run(socket, Frecv, readStarredTorrents().get(row));
 					try {
 						socket.close();
@@ -215,7 +221,7 @@ public class TorrentsList extends JFrame {
 		}
 		
 		for(int i=0;i<data.size();i++) {
-			model.addRow(new Object[]{data.get(i).get(0), data.get(i).get(1)});
+			model.addRow(new Object[]{data.get(i).get(0), data.get(i).get(2)});
 		}
 	}
 	
@@ -232,9 +238,11 @@ public class TorrentsList extends JFrame {
 				// name|info_hash
 				String[] partes = Pparte.split(line);
 				
+				// name, info_hash, seeds
 				List<String> toAdd = new ArrayList<String>();
 				toAdd.add(partes[0]);
 				toAdd.add(partes[1]);
+				toAdd.add(GetData.getSeeds(partes[1]));
 				output.add(toAdd);
 			}
 			

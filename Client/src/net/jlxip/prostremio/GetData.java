@@ -176,7 +176,16 @@ public class GetData {
 		return -1;	// TODO: show list of files and let the user choose.
 	}
 	
-	public static int getSeeds(String hash) {	// This method should only be called when searching for a given hash.
-		return -1;
+	public static String getSeeds(String hash) {
+		String body = GetTorrents.getBody("https://torrentz2.eu/"+hash);
+		
+		Pattern Ptrackers = Pattern.compile(Pattern.quote("<div class=trackers>"));	// The seeds are next to the tracker that has them.
+		String beg = Ptrackers.split(body)[1];
+		Pattern Pbegseeds = Pattern.compile(Pattern.quote("<span class=u>"));
+		String begseeds = Pbegseeds.split(beg)[1];
+		Pattern Pendseeds = Pattern.compile(Pattern.quote("</span>"));
+		String seeds = Pendseeds.split(begseeds)[0];
+		
+		return seeds;
 	}
 }
