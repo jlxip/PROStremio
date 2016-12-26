@@ -129,7 +129,7 @@ public class TorrentsList extends JFrame {
 			}
 		}
 		
-		updateStarredTorrents(starredModel);
+		updateStarredTorrents(Frecv, starredModel);
 		
 		JTable starred = new JTable(starredModel);
 		starred.getTableHeader().setReorderingAllowed(false);
@@ -142,10 +142,10 @@ public class TorrentsList extends JFrame {
 					
 					List<String> currentTorrent = new ArrayList<String>();
 					currentTorrent.add(null);	// This is not needed ;)
-					currentTorrent.add(readStarredTorrents().get(row).get(1)); // HASH
-					currentTorrent.add(readStarredTorrents().get(row).get(2));	// Seeds
+					currentTorrent.add(readStarredTorrents(Frecv).get(row).get(1)); // HASH
+					currentTorrent.add(readStarredTorrents(Frecv).get(row).get(2));	// Seeds
 					
-					Callback.run(socket, Frecv, readStarredTorrents().get(row));
+					Callback.run(socket, Frecv, readStarredTorrents(Frecv).get(row));
 					try {
 						socket.close();
 					} catch(IOException ioe) {}
@@ -183,9 +183,10 @@ public class TorrentsList extends JFrame {
 					FileWriter FWstarred = new FileWriter(Fstarred);
 					PrintWriter PWstarred = new PrintWriter(FWstarred);
 					
-					String toPrint = torrents.get(row).get(0)+"|"+torrents.get(row).get(1);
+					String clearQuery = getClearQuery(Frecv);
+					String toPrint = clearQuery+"|"+torrents.get(row).get(0)+"|"+torrents.get(row).get(1);
 					PWstarred.println(toPrint);
-					updateStarredTorrents(starredModel);	// TODO: This doesn't work.
+					updateStarredTorrents(Frecv, starredModel);	// TODO: This doesn't work.
 					
 					PWstarred.close();
 					FWstarred.close();
@@ -195,7 +196,7 @@ public class TorrentsList extends JFrame {
 			}
 		});
 		int Pstar_x = 8;
-		int Pstar_y = scrollpane.getBounds().y + scrollpane.getBounds().height + 8;
+		int Pstar_y = scrollpane.getBounds().y + scrollpane.getBounds().height + 16;
 		Point Pstar = new Point(Pstar_x, Pstar_y);
 		Dimension Dstar = star.getPreferredSize();
 		Rectangle Rstar = new Rectangle(Pstar, Dstar);
@@ -205,15 +206,15 @@ public class TorrentsList extends JFrame {
 		Component last_component = star;
 		Component largest_component = starredScrollpane;
 		int WINDOW_WIDTH = largest_component.getBounds().x + largest_component.getBounds().width + 8;
-		int WINDOW_HEIGHT = last_component.getBounds().y + last_component.getBounds().height + 32; // 24?
+		int WINDOW_HEIGHT = last_component.getBounds().y + last_component.getBounds().height + 32;
 		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		setLocationRelativeTo(null);
 		setVisible(true);
 		toFront();
 	}
 	
-	public static void updateStarredTorrents(DefaultTableModel model) {
-		ArrayList<List<String>> data = readStarredTorrents();
+	public static void updateStarredTorrents(String query, DefaultTableModel model) {
+		ArrayList<List<String>> data = readStarredTorrents(query);
 		
 		// TODO: Find a better way of clearing the table.
 		for(int i=0;i<model.getRowCount();i++) {
@@ -223,9 +224,10 @@ public class TorrentsList extends JFrame {
 		for(int i=0;i<data.size();i++) {
 			model.addRow(new Object[]{data.get(i).get(0), data.get(i).get(2)});
 		}
+		model.fireTableDataChanged(); // Maybe?
 	}
 	
-	public static ArrayList<List<String>> readStarredTorrents() {
+	public static ArrayList<List<String>> readStarredTorrents(String query) {
 		ArrayList<List<String>> output = new ArrayList<List<String>>();
 		File Fstarred = new File("starred.dat");
 		try {
@@ -235,14 +237,18 @@ public class TorrentsList extends JFrame {
 			String line = "";
 			while((line=BRstarred.readLine()) != null) {
 				Pattern Pparte = Pattern.compile(Pattern.quote("|"));
-				// name|info_hash
+				// query|name|info_hash
 				String[] partes = Pparte.split(line);
+				
+				if(!getClearQuery(partes[0]).equals(getClearQuery(query))) {	// Only show torrents linked to the query.
+					continue;
+				}
 				
 				// name, info_hash, seeds
 				List<String> toAdd = new ArrayList<String>();
-				toAdd.add(partes[0]);
 				toAdd.add(partes[1]);
-				toAdd.add(GetData.getSeeds(partes[1]));
+				toAdd.add(partes[2]);
+				toAdd.add(GetData.getSeeds(partes[2]));
 				output.add(toAdd);
 			}
 			
@@ -253,5 +259,27 @@ public class TorrentsList extends JFrame {
 		}
 		
 		return output;
+	}
+	
+	public static String getClearQuery(String query) {
+		String clearQuery = null;
+		
+		if(GetData.MovieOrSeries(query) == 0) {	// Movie
+			clearQuery = query;
+		} else {	// Series
+			Pattern Pspace = Pattern.compile(Pattern.quote(" "));
+			String[] spaces = Pspace.split(query);
+			for(int i=0;i<spaces.length-1;i++) {
+				clearQuery += spaces[i];
+				if(i != spaces.length-2) {
+					clearQuery += " ";
+				}
+			}
+		}
+		
+		// Here a "null" is printed before the name of the series (???)
+		// But it works xD
+		
+		return clearQuery;
 	}
 }
