@@ -133,11 +133,34 @@ public class TorrentsList extends JFrame {
 		
 		JTable starred = new JTable(starredModel);
 		starred.getTableHeader().setReorderingAllowed(false);
-		JScrollPane starredScrollpane = new JScrollPane(tabla);
+		starred.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseClicked(MouseEvent arg0) {
+				if(arg0.getClickCount() == 2) {
+					JTable target = (JTable)arg0.getSource();
+					int row = target.getSelectedRow();
+					Callback.run(socket, Frecv, readStarredTorrents().get(row));
+					try {
+						socket.close();
+					} catch(IOException ioe) {}
+					me.dispose();
+				}
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent arg0) {}
+			@Override
+			public void mouseExited(MouseEvent arg0) {}
+			@Override
+			public void mousePressed(MouseEvent arg0) {}
+			@Override
+			public void mouseReleased(MouseEvent arg0) {}
+		});
+		JScrollPane starredScrollpane = new JScrollPane(starred);
 		int PstarredScrollpane_x = scrollpane.getBounds().x + scrollpane.getBounds().width + 8;
 		int PstarredScrollpane_y = scrollpane.getBounds().y;
 		Point PstarredScrollpane = new Point(PstarredScrollpane_x, PstarredScrollpane_y);
-		Dimension DstarredScrollpane = new Dimension(640, 480);
+		Dimension DstarredScrollpane = new Dimension(320, 240);
 		Rectangle RstarredScrollpane = new Rectangle(PstarredScrollpane, DstarredScrollpane);
 		starredScrollpane.setBounds(RstarredScrollpane);
 		add(starredScrollpane);
@@ -147,19 +170,16 @@ public class TorrentsList extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				int row = tabla.getSelectedRow();
-				if(tabla.getSelectedRowCount() == 0) {	// TODO: MIGHT NOT WORK
-					System.out.println("Hey, coleguita, no has seleccionado nadita.");
+				if(tabla.getSelectedRowCount() == 0) {	// If no row has been selected
 					return;
 				}
-				System.out.println("Seleccionado: "+row);
-				// TODO: Comprobar si no se ha seleccionado nada.
 				try {
 					FileWriter FWstarred = new FileWriter(Fstarred);
 					PrintWriter PWstarred = new PrintWriter(FWstarred);
 					
 					String toPrint = torrents.get(row).get(0)+"|"+torrents.get(row).get(1);
 					PWstarred.println(toPrint);
-					updateStarredTorrents(starredModel);
+					updateStarredTorrents(starredModel);	// TODO: This doesn't work.
 					
 					PWstarred.close();
 					FWstarred.close();
@@ -176,10 +196,10 @@ public class TorrentsList extends JFrame {
 		star.setBounds(Rstar);
 		add(star);
 		
-		Component last_component = starredScrollpane;
+		Component last_component = star;
 		Component largest_component = starredScrollpane;
 		int WINDOW_WIDTH = largest_component.getBounds().x + largest_component.getBounds().width + 8;
-		int WINDOW_HEIGHT = last_component.getBounds().y + last_component.getBounds().height + 8; // 24?
+		int WINDOW_HEIGHT = last_component.getBounds().y + last_component.getBounds().height + 32; // 24?
 		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		setLocationRelativeTo(null);
 		setVisible(true);
@@ -187,22 +207,35 @@ public class TorrentsList extends JFrame {
 	}
 	
 	public static void updateStarredTorrents(DefaultTableModel model) {
+		ArrayList<List<String>> data = readStarredTorrents();
+		
+		// TODO: Find a better way of clearing the table.
+		for(int i=0;i<model.getRowCount();i++) {
+			model.removeRow(i);
+		}
+		
+		for(int i=0;i<data.size();i++) {
+			model.addRow(new Object[]{data.get(i).get(0), data.get(i).get(1)});
+		}
+	}
+	
+	public static ArrayList<List<String>> readStarredTorrents() {
+		ArrayList<List<String>> output = new ArrayList<List<String>>();
 		File Fstarred = new File("starred.dat");
 		try {
 			FileReader FRstarred = new FileReader(Fstarred);
 			BufferedReader BRstarred = new BufferedReader(FRstarred);
-			
-			// TODO: Find a better way of clearing the table.
-			for(int i=0;i<model.getRowCount();i++) {
-				model.removeRow(i);
-			}
 			
 			String line = "";
 			while((line=BRstarred.readLine()) != null) {
 				Pattern Pparte = Pattern.compile(Pattern.quote("|"));
 				// name|info_hash
 				String[] partes = Pparte.split(line);
-				model.addRow(new Object[]{partes[0], partes[1]});
+				
+				List<String> toAdd = new ArrayList<String>();
+				toAdd.add(partes[0]);
+				toAdd.add(partes[1]);
+				output.add(toAdd);
 			}
 			
 			BRstarred.close();
@@ -210,5 +243,7 @@ public class TorrentsList extends JFrame {
 		} catch(IOException ioe) {
 			ioe.printStackTrace();
 		}
+		
+		return output;
 	}
 }
