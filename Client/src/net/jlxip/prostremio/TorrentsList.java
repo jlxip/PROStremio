@@ -1,16 +1,26 @@
 package net.jlxip.prostremio;
 
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JScrollPane;
@@ -106,9 +116,99 @@ public class TorrentsList extends JFrame {
 			public void mouseReleased(MouseEvent arg0) {}
 		});
 		
-		setSize(1280, 720);
+		TorrentsTableModel starredModel = new TorrentsTableModel();
+		starredModel.addColumn("Name");
+		starredModel.addColumn("Seeds");
+		
+		File Fstarred = new File("starred.dat");
+		if(!Fstarred.exists()) {
+			try {
+				Fstarred.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		updateStarredTorrents(starredModel);
+		
+		JTable starred = new JTable(starredModel);
+		starred.getTableHeader().setReorderingAllowed(false);
+		JScrollPane starredScrollpane = new JScrollPane(tabla);
+		int PstarredScrollpane_x = scrollpane.getBounds().x + scrollpane.getBounds().width + 8;
+		int PstarredScrollpane_y = scrollpane.getBounds().y;
+		Point PstarredScrollpane = new Point(PstarredScrollpane_x, PstarredScrollpane_y);
+		Dimension DstarredScrollpane = new Dimension(640, 480);
+		Rectangle RstarredScrollpane = new Rectangle(PstarredScrollpane, DstarredScrollpane);
+		starredScrollpane.setBounds(RstarredScrollpane);
+		add(starredScrollpane);
+		
+		JButton star = new JButton("*");
+		star.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				int row = tabla.getSelectedRow();
+				if(tabla.getSelectedRowCount() == 0) {	// TODO: MIGHT NOT WORK
+					System.out.println("Hey, coleguita, no has seleccionado nadita.");
+					return;
+				}
+				System.out.println("Seleccionado: "+row);
+				// TODO: Comprobar si no se ha seleccionado nada.
+				try {
+					FileWriter FWstarred = new FileWriter(Fstarred);
+					PrintWriter PWstarred = new PrintWriter(FWstarred);
+					
+					String toPrint = torrents.get(row).get(0)+"|"+torrents.get(row).get(1);
+					PWstarred.println(toPrint);
+					updateStarredTorrents(starredModel);
+					
+					PWstarred.close();
+					FWstarred.close();
+				} catch(IOException ioe) {
+					ioe.printStackTrace();
+				}
+			}
+		});
+		int Pstar_x = 8;
+		int Pstar_y = scrollpane.getBounds().y + scrollpane.getBounds().height + 8;
+		Point Pstar = new Point(Pstar_x, Pstar_y);
+		Dimension Dstar = star.getPreferredSize();
+		Rectangle Rstar = new Rectangle(Pstar, Dstar);
+		star.setBounds(Rstar);
+		add(star);
+		
+		Component last_component = starredScrollpane;
+		Component largest_component = starredScrollpane;
+		int WINDOW_WIDTH = largest_component.getBounds().x + largest_component.getBounds().width + 8;
+		int WINDOW_HEIGHT = last_component.getBounds().y + last_component.getBounds().height + 8; // 24?
+		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 		setLocationRelativeTo(null);
 		setVisible(true);
 		toFront();
+	}
+	
+	public static void updateStarredTorrents(DefaultTableModel model) {
+		File Fstarred = new File("starred.dat");
+		try {
+			FileReader FRstarred = new FileReader(Fstarred);
+			BufferedReader BRstarred = new BufferedReader(FRstarred);
+			
+			// TODO: Find a better way of clearing the table.
+			for(int i=0;i<model.getRowCount();i++) {
+				model.removeRow(i);
+			}
+			
+			String line = "";
+			while((line=BRstarred.readLine()) != null) {
+				Pattern Pparte = Pattern.compile(Pattern.quote("|"));
+				// name|info_hash
+				String[] partes = Pparte.split(line);
+				model.addRow(new Object[]{partes[0], partes[1]});
+			}
+			
+			BRstarred.close();
+			FRstarred.close();
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		}
 	}
 }
