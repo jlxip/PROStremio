@@ -1,8 +1,5 @@
 package net.jlxip.prostremio;
 
-import java.awt.Component;
-import java.awt.Dimension;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -31,6 +28,7 @@ public class TorrentsList extends JFrame {
 	private static final long serialVersionUID = 1L;
 	
 	final Socket socket;
+	static JTable starred;
 	InputStream is;
 
 	public TorrentsList(Socket socket) {
@@ -53,15 +51,12 @@ public class TorrentsList extends JFrame {
 		// END
 		
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		setLayout(null);
+		getContentPane().setLayout(null);
 		setResizable(false);
 		
 		JLabel query = new JLabel("Query: "+recv);
-		Point Pquery = new Point(8, 8);
-		Dimension Dquery = query.getPreferredSize();
-		Rectangle Rquery = new Rectangle(Pquery, Dquery);
-		query.setBounds(Rquery);
-		add(query);
+		query.setBounds(new Rectangle(8, 8, 43, 16));
+		getContentPane().add(query);
 		
 		ArrayList<List<String>> torrents = GetTorrents.get(recv);
 		class TorrentsTableModel extends DefaultTableModel {
@@ -81,13 +76,8 @@ public class TorrentsList extends JFrame {
 		JTable tabla = new JTable(model);
 		tabla.getTableHeader().setReorderingAllowed(false);
 		JScrollPane scrollpane = new JScrollPane(tabla);
-		int Pscrollpane_x = 8;
-		int Pscrollpane_y = query.getBounds().y + query.getBounds().height + 8;
-		Point Pscrollpane = new Point(Pscrollpane_x, Pscrollpane_y);
-		Dimension Dscrollpane = new Dimension(640, 480);
-		Rectangle Rscrollpane = new Rectangle(Pscrollpane, Dscrollpane);
-		scrollpane.setBounds(Rscrollpane);
-		add(scrollpane);
+		scrollpane.setBounds(new Rectangle(8, 37, 640, 480));
+		getContentPane().add(scrollpane);
 		
 		final String Frecv = recv;
 		
@@ -129,9 +119,8 @@ public class TorrentsList extends JFrame {
 			}
 		}
 		
-		updateStarredTorrents(Frecv, starredModel);
-		
-		JTable starred = new JTable(starredModel);
+		starred = new JTable(starredModel);
+		updateStarredTorrents(Frecv);
 		starred.getTableHeader().setReorderingAllowed(false);
 		starred.addMouseListener(new MouseListener() {
 			@Override
@@ -163,13 +152,8 @@ public class TorrentsList extends JFrame {
 			public void mouseReleased(MouseEvent arg0) {}
 		});
 		JScrollPane starredScrollpane = new JScrollPane(starred);
-		int PstarredScrollpane_x = scrollpane.getBounds().x + scrollpane.getBounds().width + 8;
-		int PstarredScrollpane_y = scrollpane.getBounds().y;
-		Point PstarredScrollpane = new Point(PstarredScrollpane_x, PstarredScrollpane_y);
-		Dimension DstarredScrollpane = new Dimension(320, 240);
-		Rectangle RstarredScrollpane = new Rectangle(PstarredScrollpane, DstarredScrollpane);
-		starredScrollpane.setBounds(RstarredScrollpane);
-		add(starredScrollpane);
+		starredScrollpane.setBounds(new Rectangle(660, 37, 320, 240));
+		getContentPane().add(starredScrollpane);
 		
 		JButton star = new JButton("*");
 		star.addActionListener(new ActionListener() {
@@ -180,51 +164,58 @@ public class TorrentsList extends JFrame {
 					return;
 				}
 				try {
+					String before = "";
+					FileReader FRstarred = new FileReader(Fstarred);
+					BufferedReader BRstarred = new BufferedReader(FRstarred);
+					String line = "";
+					while((line = BRstarred.readLine()) != null) {
+						before += line + "\n";
+					}
+					BRstarred.close();
+					FRstarred.close();
+					
+					
 					FileWriter FWstarred = new FileWriter(Fstarred);
 					PrintWriter PWstarred = new PrintWriter(FWstarred);
 					
 					String clearQuery = getClearQuery(Frecv);
-					String toPrint = clearQuery+"|"+torrents.get(row).get(0)+"|"+torrents.get(row).get(1);
+					String toPrint = before+clearQuery+"|"+torrents.get(row).get(0)+"|"+torrents.get(row).get(1);
 					PWstarred.println(toPrint);
-					updateStarredTorrents(Frecv, starredModel);	// TODO: This doesn't work.
 					
 					PWstarred.close();
 					FWstarred.close();
 				} catch(IOException ioe) {
 					ioe.printStackTrace();
 				}
+				
+				updateStarredTorrents(Frecv);
 			}
 		});
-		int Pstar_x = 8;
-		int Pstar_y = scrollpane.getBounds().y + scrollpane.getBounds().height + 16;
-		Point Pstar = new Point(Pstar_x, Pstar_y);
-		Dimension Dstar = star.getPreferredSize();
-		Rectangle Rstar = new Rectangle(Pstar, Dstar);
-		star.setBounds(Rstar);
-		add(star);
+		star.setBounds(new Rectangle(10, 530, 41, 25));
+		getContentPane().add(star);
 		
-		Component last_component = star;
-		Component largest_component = starredScrollpane;
-		int WINDOW_WIDTH = largest_component.getBounds().x + largest_component.getBounds().width + 8;
-		int WINDOW_HEIGHT = last_component.getBounds().y + last_component.getBounds().height + 32;
-		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+		setSize(995, 595);
 		setLocationRelativeTo(null);
 		setVisible(true);
 		toFront();
 	}
 	
-	public static void updateStarredTorrents(String query, DefaultTableModel model) {
+	public static void updateStarredTorrents(String query) {
 		ArrayList<List<String>> data = readStarredTorrents(query);
 		
-		// TODO: Find a better way of clearing the table.
-		for(int i=0;i<model.getRowCount();i++) {
+		DefaultTableModel model = (DefaultTableModel)starred.getModel();
+		
+		// CLEAN ROWS
+		final int rowCount = model.getRowCount();
+		for(int i=rowCount-1;i>=0;i--) {
 			model.removeRow(i);
 		}
 		
 		for(int i=0;i<data.size();i++) {
 			model.addRow(new Object[]{data.get(i).get(0), data.get(i).get(2)});
 		}
-		model.fireTableDataChanged(); // Maybe?
+		
+		starred.setModel(model);
 	}
 	
 	public static ArrayList<List<String>> readStarredTorrents(String query) {
@@ -262,7 +253,7 @@ public class TorrentsList extends JFrame {
 	}
 	
 	public static String getClearQuery(String query) {
-		String clearQuery = null;
+		String clearQuery = "";
 		
 		if(GetData.MovieOrSeries(query) == 0) {	// Movie
 			clearQuery = query;
@@ -276,9 +267,6 @@ public class TorrentsList extends JFrame {
 				}
 			}
 		}
-		
-		// Here a "null" is printed before the name of the series (???)
-		// But it works xD
 		
 		return clearQuery;
 	}

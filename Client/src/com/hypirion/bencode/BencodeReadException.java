@@ -18,7 +18,9 @@ package com.hypirion.bencode;
  * @since 0.1.0
  */
 public class BencodeReadException extends Exception {
-    public BencodeReadException(String message, Object... args) {
-        super(String.format(message, args));
-    }
+	private static final long serialVersionUID = 1L;
+
+	public BencodeReadException(String message, Object... args) {
+	    super(String.format(message, args));
+	}
 }

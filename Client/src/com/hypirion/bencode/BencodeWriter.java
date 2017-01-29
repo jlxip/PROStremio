@@ -120,7 +120,8 @@ public final class BencodeWriter implements Closeable, Flushable {
      * values in <code>o</code> are null
      * @exception IOException if an IO exception occurs when writing
      */
-    public void write(Object o) throws IOException {
+    @SuppressWarnings("unchecked")
+	public void write(Object o) throws IOException {
         if (o instanceof Long) {
             writeLong((Long) o);
         }
