@@ -1,5 +1,6 @@
 package net.jlxip.prostremio;
 
+import java.awt.Color;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -21,13 +22,12 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
-import javax.swing.JPanel;
-import javax.swing.border.LineBorder;
-import java.awt.Color;
 import javax.swing.JTextField;
+import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableModel;
 
 public class TorrentsList extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -134,6 +134,11 @@ public class TorrentsList extends JFrame {
 			public void mouseClicked(MouseEvent arg0) {
 				if(arg0.getClickCount() == 2) {
 					JTable target = (JTable)arg0.getSource();
+					
+					if(target.getSelectedRowCount() < 1) {
+						return;
+					}
+					
 					int row = target.getSelectedRow();
 					
 					Callback.run(socket, Frecv, readStarredTorrents(Frecv).get(row));
@@ -151,7 +156,53 @@ public class TorrentsList extends JFrame {
 			@Override
 			public void mousePressed(MouseEvent arg0) {}
 			@Override
-			public void mouseReleased(MouseEvent arg0) {}
+			public void mouseReleased(MouseEvent arg0) {
+				if(arg0.getButton() != MouseEvent.BUTTON3) {
+					return;
+				}
+				
+				JTable target = (JTable)arg0.getSource();
+				
+				if(target.getSelectedRowCount() < 1) {
+					return;
+				}
+				
+				int row = target.getSelectedRow();
+				String clearQuery = getClearQuery(Frecv);
+				String toRemove = clearQuery+"|"+readStarredTorrents(Frecv).get(row).get(0)+"|"+readStarredTorrents(Frecv).get(row).get(1);
+				
+				File Fstarred = new File("starred.dat");
+				
+				try {
+					String toPrint = "";
+					FileReader FRstarred = new FileReader(Fstarred);
+					BufferedReader BRstarred = new BufferedReader(FRstarred);
+					String line = "";
+					while((line = BRstarred.readLine()) != null) {
+						if(!line.equals(toRemove)) {
+							if(line.equals("")) {
+								continue;
+							}
+							toPrint += line + "\n";							
+						}
+					}
+					BRstarred.close();
+					FRstarred.close();
+					
+					
+					FileWriter FWstarred = new FileWriter(Fstarred);
+					PrintWriter PWstarred = new PrintWriter(FWstarred);
+					
+					PWstarred.println(toPrint);
+					
+					PWstarred.close();
+					FWstarred.close();
+				} catch(IOException ioe) {
+					ioe.printStackTrace();
+				}
+				
+				updateStarredTorrents(Frecv);
+			}
 		});
 		JScrollPane starredScrollpane = new JScrollPane(starred);
 		starredScrollpane.setBounds(new Rectangle(660, 37, 320, 240));
@@ -273,6 +324,10 @@ public class TorrentsList extends JFrame {
 			
 			String line = "";
 			while((line=BRstarred.readLine()) != null) {
+				if(line.equals("")) {
+					continue;
+				}
+				
 				Pattern Pparte = Pattern.compile(Pattern.quote("|"));
 				// query|name|info_hash
 				String[] partes = Pparte.split(line);
@@ -326,6 +381,9 @@ public class TorrentsList extends JFrame {
 			BufferedReader BRstarred = new BufferedReader(FRstarred);
 			String line = "";
 			while((line = BRstarred.readLine()) != null) {
+				if(line.equals("")) {
+					continue;
+				}
 				before += line + "\n";
 			}
 			BRstarred.close();
@@ -337,7 +395,7 @@ public class TorrentsList extends JFrame {
 			
 			String clearQuery = getClearQuery(Frecv);
 			String toPrint = before+clearQuery+"|"+originalName+"|"+infohash;
-			PWstarred.println(toPrint);
+			PWstarred.print(toPrint);
 			
 			PWstarred.close();
 			FWstarred.close();

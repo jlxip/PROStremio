@@ -1,14 +1,16 @@
 package net.jlxip.prostremio;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Map;
 import java.util.regex.Pattern;
+
+import javax.swing.JOptionPane;
 
 import com.hypirion.bencode.BencodeReadException;
 import com.hypirion.bencode.BencodeReader;
@@ -109,51 +111,79 @@ public class GetData {
 	
 	
 	
-	public static ArrayList<String> getFiles(String link) {
-		ArrayList<String> files = new ArrayList<String>();
-		
-		try {
-			URL url = new URL(link);
-			HttpURLConnection httpcon = (HttpURLConnection) url.openConnection();
-			httpcon.addRequestProperty("User-Agent", "Mozilla/4.0");
-			InputStream in = httpcon.getInputStream();
-			BencodeReader br = new com.hypirion.bencode.BencodeReader(in);
+	public static final String[] torrentSites = new String[]{
+			"http://itorrents.org/torrent/",
+	};
+	public static InputStream getWorkingtorrent(String hash) {
+		for(int i=0;i<torrentSites.length;i++) {
+			URL url = null;
 			try {
-				Map<String, Object> map = br.readDict();
-				
-				// This really could be improved, but I don't have time for breaking my balls
-				// Warning: dirty code incoming
-				String info = map.get("info").toString();
-				Pattern Pbegfiles = Pattern.compile(Pattern.quote(", files=["));
-				Pattern Pendfiles = Pattern.compile(Pattern.quote("], piece"));
-				String rawfiles = Pendfiles.split(Pbegfiles.split(info)[1])[0];
-				
-				Pattern Popen = Pattern.compile(Pattern.quote("{path=["));
-				String[] Sfiles = Popen.split(rawfiles);
-				for(int i=0;i<Sfiles.length;i++) {
-					Pattern Pclose = Pattern.compile(Pattern.quote("],"));
-					String thisfile = Pclose.split(Sfiles[i])[0];
-					files.add(thisfile);
-				}
-				
-				br.close();
-				in.close();
-			} catch (BencodeReadException e) {
-				e.printStackTrace();
+				url = new URL(torrentSites[i] + hash + ".torrent");
+			} catch (MalformedURLException e1) {
+				// This souldn't be called, at all.
+				e1.printStackTrace();
 			}
 			
-			new File("tmp.torrent").delete();
-		} catch(IOException ioe) {
-			System.out.println("No se ha podido encontrar el torrent :(");
-			ioe.printStackTrace();
+			try {
+				HttpURLConnection.setFollowRedirects(false);
+				HttpURLConnection httpcon = (HttpURLConnection)url.openConnection();
+				httpcon.addRequestProperty("User-Agent", "Mozilla/4.0");
+				if(httpcon.getHeaderField("Location") != null) {
+					continue;
+				}
+				
+				InputStream in = httpcon.getInputStream();
+				return in;
+			} catch (IOException e) { 
+				continue;
+			}
+		}
+		
+		return null;
+	}
+	
+	public static ArrayList<String> getFiles(String hash) {
+		ArrayList<String> files = new ArrayList<String>();
+		
+		InputStream in = getWorkingtorrent(hash);
+		
+		if(in == null) {
+			JOptionPane.showMessageDialog(null, "The torrent file could not be found :(");
+			System.exit(1);	// This could be done in a clean way.
+		}
+		
+		BencodeReader br = new com.hypirion.bencode.BencodeReader(in);
+		try {
+			Map<String, Object> map = br.readDict();
+			
+			// This could really be improved, but I don't have time for breaking my balls
+			// Warning: dirty code incoming
+			String info = map.get("info").toString();
+			Pattern Pbegfiles = Pattern.compile(Pattern.quote(", files=["));
+			Pattern Pendfiles = Pattern.compile(Pattern.quote("], piece"));
+			String rawfiles = Pendfiles.split(Pbegfiles.split(info)[1])[0];
+			
+			Pattern Popen = Pattern.compile(Pattern.quote("{path=["));
+			String[] Sfiles = Popen.split(rawfiles);
+			for(int i=0;i<Sfiles.length;i++) {
+				Pattern Pclose = Pattern.compile(Pattern.quote("],"));
+				String thisfile = Pclose.split(Sfiles[i])[0];
+				files.add(thisfile);
+			}
+			
+			br.close();
+			in.close();
+		} catch (BencodeReadException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 		return files;
 	}
 	
 	public static int getIdx(String last_space, String hash) {
-		String url = "http://itorrents.org/torrent/"+hash+".torrent";
-		ArrayList<String> getFiles = getFiles(url);
+		ArrayList<String> getFiles = getFiles(hash);
 		
 		Pattern Pep = Pattern.compile(Pattern.quote(last_space));
 		
