@@ -1,1 +1,1 @@
-- Permitir torrent manual
+- More infohash->torrent sites!

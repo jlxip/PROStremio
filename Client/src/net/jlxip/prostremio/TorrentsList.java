@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
@@ -35,6 +36,7 @@ public class TorrentsList extends JFrame {
 	static JTable starred;
 	InputStream is;
 	private JTextField customInfohash;
+	private JTextField customInfohashName;
 
 	public TorrentsList(Socket socket) {
 		super("PROStremio");
@@ -174,7 +176,7 @@ public class TorrentsList extends JFrame {
 		
 		JPanel panel = new JPanel();
 		panel.setBorder(new LineBorder(Color.GRAY));
-		panel.setBounds(660, 290, 317, 119);
+		panel.setBounds(660, 290, 317, 189);
 		getContentPane().add(panel);
 		panel.setLayout(null);
 		
@@ -206,7 +208,7 @@ public class TorrentsList extends JFrame {
 				me.dispose();
 			}
 		});
-		btnNewButton.setBounds(12, 83, 240, 25);
+		btnNewButton.setBounds(12, 153, 240, 25);
 		panel.add(btnNewButton);
 		
 		JButton button = new JButton("*");
@@ -215,14 +217,28 @@ public class TorrentsList extends JFrame {
 				if(customInfohash.getText().equals("")) {
 					return;
 				}
+				if(customInfohashName.getText().equals("")) {
+					JOptionPane.showMessageDialog(null, "A name for this infohash is required.");
+					return;
+				}
 				
-				addToStarred(Frecv, "Custom Infohash", customInfohash.getText());
+				addToStarred(Frecv, customInfohashName.getText(), customInfohash.getText());
 				customInfohash.setText("");
+				customInfohashName.setText("");
 				updateStarredTorrents(Frecv);
 			}
 		});
-		button.setBounds(264, 83, 41, 25);
+		button.setBounds(264, 153, 41, 25);
 		panel.add(button);
+		
+		JLabel lblName = new JLabel("Name (only needed if starred):");
+		lblName.setBounds(12, 83, 177, 16);
+		panel.add(lblName);
+		
+		customInfohashName = new JTextField();
+		customInfohashName.setBounds(12, 112, 293, 28);
+		panel.add(customInfohashName);
+		customInfohashName.setColumns(10);
 		
 		setSize(995, 595);
 		setLocationRelativeTo(null);
