@@ -188,4 +188,15 @@ public class GetData {
 		
 		return seeds;
 	}
+	
+	public static String getName(String hash) {
+		String body = GetTorrents.getBody("https://torrentz2.eu/"+hash);
+		
+		Pattern Pbegspan = Pattern.compile(Pattern.quote("<span>"));
+		String beg = Pbegspan.split(body)[1];
+		Pattern Pendspan = Pattern.compile(Pattern.quote("</span>"));
+		String name = Pendspan.split(beg)[0];
+		
+		return name;
+	}
 }

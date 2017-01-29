@@ -23,6 +23,10 @@ import javax.swing.JLabel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.JPanel;
+import javax.swing.border.LineBorder;
+import java.awt.Color;
+import javax.swing.JTextField;
 
 public class TorrentsList extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -30,6 +34,7 @@ public class TorrentsList extends JFrame {
 	final Socket socket;
 	static JTable starred;
 	InputStream is;
+	private JTextField customInfohash;
 
 	public TorrentsList(Socket socket) {
 		super("PROStremio");
@@ -129,11 +134,6 @@ public class TorrentsList extends JFrame {
 					JTable target = (JTable)arg0.getSource();
 					int row = target.getSelectedRow();
 					
-					List<String> currentTorrent = new ArrayList<String>();
-					currentTorrent.add(null);	// This is not needed ;)
-					currentTorrent.add(readStarredTorrents(Frecv).get(row).get(1)); // HASH
-					currentTorrent.add(readStarredTorrents(Frecv).get(row).get(2));	// Seeds
-					
 					Callback.run(socket, Frecv, readStarredTorrents(Frecv).get(row));
 					try {
 						socket.close();
@@ -159,40 +159,70 @@ public class TorrentsList extends JFrame {
 		star.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				int row = tabla.getSelectedRow();
 				if(tabla.getSelectedRowCount() == 0) {	// If no row has been selected
 					return;
 				}
-				try {
-					String before = "";
-					FileReader FRstarred = new FileReader(Fstarred);
-					BufferedReader BRstarred = new BufferedReader(FRstarred);
-					String line = "";
-					while((line = BRstarred.readLine()) != null) {
-						before += line + "\n";
-					}
-					BRstarred.close();
-					FRstarred.close();
-					
-					
-					FileWriter FWstarred = new FileWriter(Fstarred);
-					PrintWriter PWstarred = new PrintWriter(FWstarred);
-					
-					String clearQuery = getClearQuery(Frecv);
-					String toPrint = before+clearQuery+"|"+torrents.get(row).get(0)+"|"+torrents.get(row).get(1);
-					PWstarred.println(toPrint);
-					
-					PWstarred.close();
-					FWstarred.close();
-				} catch(IOException ioe) {
-					ioe.printStackTrace();
-				}
+				
+				int row = tabla.getSelectedRow();
+				addToStarred(Frecv, torrents.get(row).get(0), torrents.get(row).get(1));
 				
 				updateStarredTorrents(Frecv);
 			}
 		});
 		star.setBounds(new Rectangle(10, 530, 41, 25));
 		getContentPane().add(star);
+		
+		JPanel panel = new JPanel();
+		panel.setBorder(new LineBorder(Color.GRAY));
+		panel.setBounds(660, 290, 317, 119);
+		getContentPane().add(panel);
+		panel.setLayout(null);
+		
+		JLabel lblCustomInfohash = new JLabel("Custom infohash:");
+		lblCustomInfohash.setBounds(12, 13, 100, 16);
+		panel.add(lblCustomInfohash);
+		
+		customInfohash = new JTextField();
+		customInfohash.setBounds(12, 42, 293, 28);
+		panel.add(customInfohash);
+		customInfohash.setColumns(10);
+		
+		JButton btnNewButton = new JButton("OK");
+		btnNewButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent arg0) {
+				if(customInfohash.getText().equals("")) {
+					return;
+				}
+				
+				List<String> selectedCustomInfohash = new ArrayList<String>();
+				selectedCustomInfohash.add(GetData.getName(customInfohash.getText()));	// NAME
+				selectedCustomInfohash.add(customInfohash.getText()); // HASH
+				selectedCustomInfohash.add(GetData.getSeeds(customInfohash.getText()));	// Seeds
+				
+				Callback.run(socket, Frecv, selectedCustomInfohash);
+				try {
+					socket.close();
+				} catch(IOException ioe) {}
+				me.dispose();
+			}
+		});
+		btnNewButton.setBounds(12, 83, 240, 25);
+		panel.add(btnNewButton);
+		
+		JButton button = new JButton("*");
+		button.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(customInfohash.getText().equals("")) {
+					return;
+				}
+				
+				addToStarred(Frecv, "Custom Infohash", customInfohash.getText());
+				customInfohash.setText("");
+				updateStarredTorrents(Frecv);
+			}
+		});
+		button.setBounds(264, 83, 41, 25);
+		panel.add(button);
 		
 		setSize(995, 595);
 		setLocationRelativeTo(null);
@@ -269,5 +299,34 @@ public class TorrentsList extends JFrame {
 		}
 		
 		return clearQuery;
+	}
+	
+	public static void addToStarred(String Frecv, String originalName, String infohash) {
+		File Fstarred = new File("starred.dat");
+		
+		try {
+			String before = "";
+			FileReader FRstarred = new FileReader(Fstarred);
+			BufferedReader BRstarred = new BufferedReader(FRstarred);
+			String line = "";
+			while((line = BRstarred.readLine()) != null) {
+				before += line + "\n";
+			}
+			BRstarred.close();
+			FRstarred.close();
+			
+			
+			FileWriter FWstarred = new FileWriter(Fstarred);
+			PrintWriter PWstarred = new PrintWriter(FWstarred);
+			
+			String clearQuery = getClearQuery(Frecv);
+			String toPrint = before+clearQuery+"|"+originalName+"|"+infohash;
+			PWstarred.println(toPrint);
+			
+			PWstarred.close();
+			FWstarred.close();
+		} catch(IOException ioe) {
+			ioe.printStackTrace();
+		}
 	}
 }

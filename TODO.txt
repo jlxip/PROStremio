@@ -1,4 +1,1 @@
-- Favoritos
-- Descargar (ver offline)
-- Subtítulos (en descargar)
-- Permitir infohash manual
+- Permitir torrent manual
