@@ -63,6 +63,8 @@ public class GetTorrents {
 		ArrayList<List<String>> torrents = new ArrayList<List<String>>();
 		
 		// PATTERNS AREA
+		Pattern Pnofollow = Pattern.compile(Pattern.quote("nofollow"));
+		
 		Pattern Pdl = Pattern.compile(Pattern.quote("<dl>"));
 		Pattern Pend_dl = Pattern.compile(Pattern.quote("</dl>"));
 		Pattern Pdt = Pattern.compile(Pattern.quote("<dt>"));
@@ -90,6 +92,9 @@ public class GetTorrents {
 			
 			String result = Pend_dl.split(dls[i])[0];
 			if(Pdt.split(result).length < 2) {	// For messages like: x results removed in compliance with EUCD / DMCA
+				continue;
+			}
+			if(Pnofollow.split(result).length > 1) {
 				continue;
 			}
 			String dt = Pdt.split(result)[1];
