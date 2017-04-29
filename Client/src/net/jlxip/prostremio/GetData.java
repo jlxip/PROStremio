@@ -98,7 +98,7 @@ public class GetData {
 	public static int MovieOrSeries(String query) {
 		int toReturn = 0;
 		
-		Pattern Pspace = Pattern.compile(Pattern.quote(" "));
+		final Pattern Pspace = Pattern.compile(Pattern.quote(" "));
 		String lastSpace = Pspace.split(query)[Pspace.split(query).length-1];
 		if(lastSpace.toLowerCase().toCharArray()[0] == 's' && lastSpace.toLowerCase().toCharArray()[3] == 'e') {
 			toReturn = 1;
@@ -182,22 +182,41 @@ public class GetData {
 		return files;
 	}
 	
+	private static final String[] OKextensions = new String[]{"avi", "mkv", "mp4", "m4v"};	// ACCEPTED EXTENSIONS
+	public static boolean checkExtension(String fileName) {
+		String extension = fileName.toLowerCase().substring(fileName.length()-3, fileName.length());
+		
+		for(int j=0;j<OKextensions.length;j++) {
+			if(extension.equals(OKextensions[j])) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
 	public static int getIdx(String last_space, String hash) {
 		ArrayList<String> getFiles = getFiles(hash);
 		
-		Pattern Pep = Pattern.compile(Pattern.quote(last_space));
+		final Pattern Pep = Pattern.compile(Pattern.quote(last_space));
+		final Pattern Ps = Pattern.compile(Pattern.quote("s"));
+		final Pattern Pe = Pattern.compile(Pattern.quote("e"));
 		
-		for(int i=1;i<getFiles.size();i++) {	// If something starts to fail, change the start value of i to 0
+		for(int i=1;i<getFiles.size();i++) {
 			//System.out.println(getFiles.get(i));
-			if(Pep.split(getFiles.get(i).toLowerCase()).length > 1) {
-				// ACCEPTED EXTENSIONS
-				String[] OKextensions = new String[]{"avi", "mkv", "mp4", "m4v"};
+			if(Pep.split(getFiles.get(i).toLowerCase()).length > 1) {	// If it's the chosen episode
+				if(checkExtension(getFiles.get(i))) {
+					return i-1;	// Has to be i-1, because of something weird I did up there. Doesn't matter.
+				}
+			} else {
+				String season = String.valueOf(Integer.parseInt(Pe.split(Ps.split(last_space)[1])[0]));	// Just to remove the initial zero (in case it exists)
+				String episode = Pe.split(last_space)[1];
+				String combo = season + "x" + episode;
+				final Pattern Pcombo = Pattern.compile(Pattern.quote(combo));
 				
-				String extension = getFiles.get(i).toLowerCase().substring(getFiles.get(i).length()-3, getFiles.get(i).length());
-				
-				for(int j=0;j<OKextensions.length;j++) {
-					if(extension.equals(OKextensions[j])) {
-						return i-1;	// Has to be i-1, because of something weird I did up there.
+				if(Pcombo.split(getFiles.get(i).toLowerCase()).length > 1) {
+					if(checkExtension(getFiles.get(i))) {
+						return i-1;	// Same as above.
 					}
 				}
 			}
