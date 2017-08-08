@@ -1,7 +1,9 @@
 package net.jlxip.prostremio;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -10,12 +12,34 @@ import java.util.Base64;
 import java.util.Map;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.HttpsURLConnection;
 import javax.swing.JOptionPane;
 
 import com.hypirion.bencode.BencodeReadException;
 import com.hypirion.bencode.BencodeReader;
 
 public class GetData {
+	public static String getBody(String hash) {
+		String body = "";
+		try {
+			URL url = new URL("https://torrentz2.eu/"+hash);	// Using torrentz2 to check various things
+			HttpsURLConnection con = (HttpsURLConnection)url.openConnection();
+			con.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.95 Safari/537.11");
+			BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream()));
+			
+			String input;
+			while ((input = br.readLine()) != null){
+				body += input + "\n";
+			}
+			br.close();
+		} catch (MalformedURLException mue) {
+			mue.printStackTrace();
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+		return body;
+	}
+
 	public static String getQuality(String name) {
 		Pattern P480 = Pattern.compile(Pattern.quote("480p"));
 		Pattern P720 = Pattern.compile(Pattern.quote("720p"));
@@ -47,7 +71,7 @@ public class GetData {
 	public static String getTrackers(String hash) {
 		String trackers = "";
 		
-		String body = GetTorrents.getBody("https://torrentz2.eu/"+hash);
+		String body = getBody(hash);
 		
 		Pattern Prawtrackers = Pattern.compile(Pattern.quote("/announce</dt>"));
 		Pattern Pdldt = Pattern.compile(Pattern.quote("<dl><dt>"));
@@ -112,7 +136,7 @@ public class GetData {
 	
 	
 	public static final String[] torrentSites = new String[]{
-			"http://itorrents.org/torrent/",
+			"http://itorrents.org/torrent/"
 	};
 	public static InputStream getWorkingtorrent(String hash) {
 		for(int i=0;i<torrentSites.length;i++) {
@@ -226,7 +250,7 @@ public class GetData {
 	}
 	
 	public static String getSeeds(String hash) {
-		String body = GetTorrents.getBody("https://torrentz2.eu/"+hash);
+		String body = getBody(hash);
 		
 		Pattern Ptrackers = Pattern.compile(Pattern.quote("<div class=trackers>"));	// The seeds are next to the tracker that has them.
 		String beg = Ptrackers.split(body)[1];
@@ -239,7 +263,7 @@ public class GetData {
 	}
 	
 	public static String getName(String hash) {
-		String body = GetTorrents.getBody("https://torrentz2.eu/"+hash);
+		String body = getBody(hash);
 		
 		Pattern Pbegspan = Pattern.compile(Pattern.quote("<span>"));
 		String beg = Pbegspan.split(body)[1];

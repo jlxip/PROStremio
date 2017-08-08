@@ -51,7 +51,7 @@ public class Main {
 		while(true) {
 			try {
 				Socket s = ss.accept();
-				new TorrentsList(s);				
+				new Window(s);				
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}

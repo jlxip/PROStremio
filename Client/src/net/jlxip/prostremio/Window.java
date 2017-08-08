@@ -29,7 +29,7 @@ import javax.swing.JTextField;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableModel;
 
-public class TorrentsList extends JFrame {
+public class Window extends JFrame {
 	private static final long serialVersionUID = 1L;
 	
 	final Socket socket;
@@ -38,7 +38,7 @@ public class TorrentsList extends JFrame {
 	private JTextField customInfohash;
 	private JTextField customInfohashName;
 
-	public TorrentsList(Socket socket) {
+	public Window(Socket socket) {
 		super("PROStremio");
 		
 		this.socket = socket;
@@ -62,11 +62,14 @@ public class TorrentsList extends JFrame {
 		setResizable(false);
 		
 		JLabel query = new JLabel("Query: "+recv);
-		query.setBounds(new Rectangle(8, 8, 43, 16));
+		query.setBounds(new Rectangle(8, 8, 516, 16));
 		getContentPane().add(query);
 		
-		ArrayList<List<String>> torrents = GetTorrents.get(recv);
-		class TorrentsTableModel extends DefaultTableModel {
+		final String Frecv = recv;
+		
+		Window me = this;
+		
+		class StarredTableModel extends DefaultTableModel {
 			private static final long serialVersionUID = 1L;
 
 			@Override
@@ -74,46 +77,8 @@ public class TorrentsList extends JFrame {
 				return false;
 			}
 		}
-		TorrentsTableModel model = new TorrentsTableModel();
-		model.addColumn("Name");
-		model.addColumn("Seeds");
-		for(int i=0;i<torrents.size();i++) {
-			model.addRow(new Object[]{torrents.get(i).get(0), torrents.get(i).get(2)});
-		}
-		JTable tabla = new JTable(model);
-		tabla.getTableHeader().setReorderingAllowed(false);
-		JScrollPane scrollpane = new JScrollPane(tabla);
-		scrollpane.setBounds(new Rectangle(8, 37, 640, 480));
-		getContentPane().add(scrollpane);
 		
-		final String Frecv = recv;
-		
-		TorrentsList me = this;
-		tabla.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent arg0) {
-				if(arg0.getClickCount() == 2) {
-					JTable target = (JTable)arg0.getSource();
-					int row = target.getSelectedRow();
-					Callback.run(socket, Frecv, torrents.get(row));
-					try {
-						socket.close();
-					} catch(IOException ioe) {}
-					me.dispose();
-				}
-			}
-
-			@Override
-			public void mouseEntered(MouseEvent arg0) {}
-			@Override
-			public void mouseExited(MouseEvent arg0) {}
-			@Override
-			public void mousePressed(MouseEvent arg0) {}
-			@Override
-			public void mouseReleased(MouseEvent arg0) {}
-		});
-		
-		TorrentsTableModel starredModel = new TorrentsTableModel();
+		StarredTableModel starredModel = new StarredTableModel();
 		starredModel.addColumn("Name");
 		starredModel.addColumn("Seeds");
 		
@@ -205,29 +170,12 @@ public class TorrentsList extends JFrame {
 			}
 		});
 		JScrollPane starredScrollpane = new JScrollPane(starred);
-		starredScrollpane.setBounds(new Rectangle(660, 37, 320, 240));
+		starredScrollpane.setBounds(new Rectangle(18, 42, 320, 240));
 		getContentPane().add(starredScrollpane);
-		
-		JButton star = new JButton("*");
-		star.addActionListener(new ActionListener() {
-			@Override
-			public void actionPerformed(ActionEvent e) {
-				if(tabla.getSelectedRowCount() == 0) {	// If no row has been selected
-					return;
-				}
-				
-				int row = tabla.getSelectedRow();
-				addToStarred(Frecv, torrents.get(row).get(0), torrents.get(row).get(1));
-				
-				updateStarredTorrents(Frecv);
-			}
-		});
-		star.setBounds(new Rectangle(10, 530, 41, 25));
-		getContentPane().add(star);
 		
 		JPanel panel = new JPanel();
 		panel.setBorder(new LineBorder(Color.GRAY));
-		panel.setBounds(660, 290, 317, 189);
+		panel.setBounds(350, 42, 317, 189);
 		getContentPane().add(panel);
 		panel.setLayout(null);
 		
@@ -291,7 +239,7 @@ public class TorrentsList extends JFrame {
 		panel.add(customInfohashName);
 		customInfohashName.setColumns(10);
 		
-		setSize(995, 595);
+		setSize(684, 347);
 		setLocationRelativeTo(null);
 		setVisible(true);
 		toFront();
